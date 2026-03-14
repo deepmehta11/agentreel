@@ -4,6 +4,8 @@
 
 Every AI agent run becomes a shareable, forkable, diffable object. AgentReel captures the full trajectory: inputs, tool calls, LLM decisions, internal reasoning, failures, costs, and final output.
 
+![AgentReel Demo](demo.gif)
+
 ```bash
 # One-line install
 curl -fsSL https://raw.githubusercontent.com/deepmehta11/agentreel/main/install.sh | bash
