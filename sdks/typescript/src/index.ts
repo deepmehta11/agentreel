@@ -1,5 +1,6 @@
 export { Trajectory } from "./trajectory.js";
 export { Recorder } from "./recorder.js";
+export { Tracer } from "./tracer.js";
 export { redact, redactTrajectoryFile } from "./redact.js";
 export type {
   AgentInfo,
