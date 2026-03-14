@@ -1,0 +1,463 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentreel.dev/schema/trajectory/v0.1.0",
+  "title": "AgentReel Trajectory",
+  "description": "A complete recording of an AI agent run — inputs, decisions, tool calls, outputs, and metadata.",
+  "type": "object",
+  "required": ["version", "id", "metadata", "steps"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "0.1.0",
+      "description": "Schema version"
+    },
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique identifier for this trajectory"
+    },
+    "parent_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "If this trajectory was forked from another, the parent trajectory ID"
+    },
+    "metadata": {
+      "$ref": "#/$defs/Metadata"
+    },
+    "input": {
+      "$ref": "#/$defs/Input"
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Step"
+      },
+      "description": "Ordered sequence of steps the agent took"
+    },
+    "outcome": {
+      "$ref": "#/$defs/Outcome"
+    },
+    "stats": {
+      "$ref": "#/$defs/Stats"
+    },
+    "annotations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Annotation"
+      },
+      "description": "Human or automated annotations on this trajectory"
+    }
+  },
+  "$defs": {
+    "Metadata": {
+      "type": "object",
+      "required": ["created_at"],
+      "properties": {
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "completed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "agent": {
+          "$ref": "#/$defs/AgentInfo"
+        },
+        "model": {
+          "$ref": "#/$defs/ModelInfo"
+        },
+        "environment": {
+          "$ref": "#/$defs/EnvironmentInfo"
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "title": {
+          "type": "string",
+          "description": "Human-readable title for this run"
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of what this run does"
+        }
+      }
+    },
+    "AgentInfo": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Agent framework or name (e.g., 'claude-code', 'openai-agents-sdk', 'langchain')"
+        },
+        "version": { "type": "string" },
+        "url": {
+          "type": "string",
+          "format": "uri"
+        }
+      }
+    },
+    "ModelInfo": {
+      "type": "object",
+      "properties": {
+        "provider": {
+          "type": "string",
+          "description": "LLM provider (e.g., 'anthropic', 'openai', 'google')"
+        },
+        "model_id": {
+          "type": "string",
+          "description": "Model identifier (e.g., 'claude-opus-4-6', 'gpt-4o')"
+        },
+        "parameters": {
+          "type": "object",
+          "description": "Model parameters like temperature, top_p, etc.",
+          "additionalProperties": true
+        }
+      }
+    },
+    "EnvironmentInfo": {
+      "type": "object",
+      "properties": {
+        "os": { "type": "string" },
+        "arch": { "type": "string" },
+        "runtime": {
+          "type": "string",
+          "description": "Runtime environment (e.g., 'python 3.12', 'node 22')"
+        }
+      },
+      "additionalProperties": true
+    },
+    "Input": {
+      "type": "object",
+      "properties": {
+        "prompt": {
+          "type": "string",
+          "description": "The initial user prompt or task"
+        },
+        "system_prompt": {
+          "type": "string",
+          "description": "System prompt if any"
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/FileSnapshot"
+          },
+          "description": "Initial file state provided to the agent"
+        },
+        "context": {
+          "type": "object",
+          "description": "Additional context provided to the agent",
+          "additionalProperties": true
+        }
+      }
+    },
+    "Step": {
+      "type": "object",
+      "required": ["index", "type", "timestamp"],
+      "properties": {
+        "index": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Zero-based step index"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["llm_call", "tool_call", "human_input", "error", "checkpoint"],
+          "description": "Type of step"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "duration_ms": {
+          "type": "number",
+          "description": "Duration of this step in milliseconds"
+        },
+        "llm_call": {
+          "$ref": "#/$defs/LLMCall"
+        },
+        "tool_call": {
+          "$ref": "#/$defs/ToolCall"
+        },
+        "human_input": {
+          "$ref": "#/$defs/HumanInput"
+        },
+        "error": {
+          "$ref": "#/$defs/Error"
+        },
+        "tokens": {
+          "$ref": "#/$defs/TokenUsage"
+        },
+        "cost_usd": {
+          "type": "number",
+          "description": "Estimated cost in USD for this step"
+        }
+      }
+    },
+    "LLMCall": {
+      "type": "object",
+      "properties": {
+        "model": {
+          "type": "string",
+          "description": "Model used for this specific call (may differ from top-level if routing)"
+        },
+        "messages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Message"
+          }
+        },
+        "response": {
+          "$ref": "#/$defs/Message"
+        },
+        "stop_reason": {
+          "type": "string",
+          "enum": ["end_turn", "tool_use", "max_tokens", "stop_sequence"]
+        }
+      }
+    },
+    "Message": {
+      "type": "object",
+      "required": ["role"],
+      "properties": {
+        "role": {
+          "type": "string",
+          "enum": ["system", "user", "assistant", "tool"]
+        },
+        "content": {
+          "description": "Text content or structured content blocks",
+          "oneOf": [
+            { "type": "string" },
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ContentBlock"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "ContentBlock": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["text", "image", "tool_use", "tool_result"]
+        },
+        "text": { "type": "string" },
+        "media_type": { "type": "string" },
+        "data": {
+          "type": "string",
+          "description": "Base64-encoded data for images/binary content"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL reference for media content"
+        },
+        "tool_use_id": { "type": "string" },
+        "tool_name": { "type": "string" },
+        "input": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "output": {}
+      }
+    },
+    "ToolCall": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Tool name (e.g., 'bash', 'read_file', 'web_search')"
+        },
+        "input": {
+          "type": "object",
+          "description": "Tool input parameters",
+          "additionalProperties": true
+        },
+        "output": {
+          "description": "Tool output — string, object, or null on failure",
+          "oneOf": [
+            { "type": "string" },
+            { "type": "object", "additionalProperties": true },
+            { "type": "null" }
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": ["success", "error", "timeout", "denied"]
+        },
+        "screenshots": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Screenshot"
+          }
+        }
+      }
+    },
+    "HumanInput": {
+      "type": "object",
+      "properties": {
+        "content": { "type": "string" },
+        "action": {
+          "type": "string",
+          "enum": ["approve", "deny", "edit", "message"],
+          "description": "What the human did (approved a tool call, denied it, edited code, sent a message)"
+        }
+      }
+    },
+    "Error": {
+      "type": "object",
+      "properties": {
+        "code": { "type": "string" },
+        "message": { "type": "string" },
+        "recoverable": { "type": "boolean" },
+        "stack_trace": { "type": "string" }
+      }
+    },
+    "TokenUsage": {
+      "type": "object",
+      "properties": {
+        "input_tokens": { "type": "integer" },
+        "output_tokens": { "type": "integer" },
+        "cache_read_tokens": { "type": "integer" },
+        "cache_write_tokens": { "type": "integer" }
+      }
+    },
+    "Screenshot": {
+      "type": "object",
+      "properties": {
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "media_type": {
+          "type": "string",
+          "default": "image/png"
+        },
+        "data": {
+          "type": "string",
+          "description": "Base64-encoded image data"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to screenshot if stored externally"
+        },
+        "label": { "type": "string" }
+      }
+    },
+    "FileSnapshot": {
+      "type": "object",
+      "required": ["path"],
+      "properties": {
+        "path": { "type": "string" },
+        "content": { "type": "string" },
+        "hash": {
+          "type": "string",
+          "description": "SHA-256 hash of file content"
+        },
+        "language": { "type": "string" }
+      }
+    },
+    "Outcome": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["success", "failure", "partial", "aborted"],
+          "description": "Final outcome of the run"
+        },
+        "summary": {
+          "type": "string",
+          "description": "Human-readable summary of what happened"
+        },
+        "files_changed": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/FileDiff"
+          }
+        },
+        "artifacts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Artifact"
+          },
+          "description": "Any outputs produced by the run"
+        }
+      }
+    },
+    "FileDiff": {
+      "type": "object",
+      "required": ["path", "action"],
+      "properties": {
+        "path": { "type": "string" },
+        "action": {
+          "type": "string",
+          "enum": ["created", "modified", "deleted"]
+        },
+        "diff": {
+          "type": "string",
+          "description": "Unified diff format"
+        }
+      }
+    },
+    "Artifact": {
+      "type": "object",
+      "required": ["name", "type"],
+      "properties": {
+        "name": { "type": "string" },
+        "type": {
+          "type": "string",
+          "description": "MIME type or artifact type"
+        },
+        "data": { "type": "string" },
+        "url": {
+          "type": "string",
+          "format": "uri"
+        }
+      }
+    },
+    "Stats": {
+      "type": "object",
+      "properties": {
+        "total_steps": { "type": "integer" },
+        "total_llm_calls": { "type": "integer" },
+        "total_tool_calls": { "type": "integer" },
+        "total_tokens": {
+          "$ref": "#/$defs/TokenUsage"
+        },
+        "total_cost_usd": { "type": "number" },
+        "total_duration_ms": { "type": "number" },
+        "errors_count": { "type": "integer" },
+        "retries_count": { "type": "integer" }
+      }
+    },
+    "Annotation": {
+      "type": "object",
+      "required": ["type", "content"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["comment", "rating", "label", "flag"]
+        },
+        "content": { "type": "string" },
+        "author": { "type": "string" },
+        "step_index": {
+          "type": "integer",
+          "description": "If annotating a specific step"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}

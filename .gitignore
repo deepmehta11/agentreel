@@ -1,0 +1,16 @@
+/target
+*.swp
+*.swo
+.DS_Store
+.env
+*.trajectory.json
+!spec/example.trajectory.json
+!web/public/example.trajectory.json
+node_modules
+.next
+dist
+__pycache__
+*.pyc
+.pytest_cache
+.venv
+sdks/python/agentreel.egg-info/

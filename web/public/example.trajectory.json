@@ -1,0 +1,135 @@
+{
+  "version": "0.1.0",
+  "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "metadata": {
+    "created_at": "2026-03-13T10:00:00Z",
+    "completed_at": "2026-03-13T10:02:34Z",
+    "agent": {
+      "name": "claude-code",
+      "version": "1.0.0"
+    },
+    "model": {
+      "provider": "anthropic",
+      "model_id": "claude-opus-4-6",
+      "parameters": {
+        "temperature": 1.0,
+        "max_tokens": 16384
+      }
+    },
+    "environment": {
+      "os": "darwin",
+      "arch": "aarch64",
+      "runtime": "python 3.12"
+    },
+    "tags": ["coding", "python", "fibonacci"],
+    "title": "Write a Fibonacci function in Python",
+    "description": "Agent writes and tests a recursive Fibonacci function with memoization"
+  },
+  "input": {
+    "prompt": "Write a fibonacci function in Python that handles large numbers efficiently"
+  },
+  "steps": [
+    {
+      "index": 0,
+      "type": "llm_call",
+      "timestamp": "2026-03-13T10:00:00Z",
+      "duration_ms": 2340,
+      "llm_call": {
+        "model": "claude-opus-4-6",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Write a fibonacci function in Python that handles large numbers efficiently"
+          }
+        ],
+        "response": {
+          "role": "assistant",
+          "content": "I'll create an efficient Fibonacci function using memoization. Let me write the code."
+        },
+        "stop_reason": "tool_use"
+      },
+      "tokens": {
+        "input_tokens": 42,
+        "output_tokens": 156
+      },
+      "cost_usd": 0.0023
+    },
+    {
+      "index": 1,
+      "type": "tool_call",
+      "timestamp": "2026-03-13T10:00:02Z",
+      "duration_ms": 50,
+      "tool_call": {
+        "name": "write_file",
+        "input": {
+          "path": "fibonacci.py",
+          "content": "from functools import lru_cache\n\n@lru_cache(maxsize=None)\ndef fibonacci(n: int) -> int:\n    if n < 0:\n        raise ValueError(\"n must be non-negative\")\n    if n <= 1:\n        return n\n    return fibonacci(n - 1) + fibonacci(n - 2)\n\nif __name__ == \"__main__\":\n    for i in range(20):\n        print(f\"fib({i}) = {fibonacci(i)}\")\n"
+        },
+        "output": "File written: fibonacci.py",
+        "status": "success"
+      }
+    },
+    {
+      "index": 2,
+      "type": "tool_call",
+      "timestamp": "2026-03-13T10:00:03Z",
+      "duration_ms": 1200,
+      "tool_call": {
+        "name": "bash",
+        "input": {
+          "command": "python fibonacci.py"
+        },
+        "output": "fib(0) = 0\nfib(1) = 1\nfib(2) = 1\nfib(3) = 2\nfib(4) = 3\nfib(5) = 5\nfib(6) = 8\nfib(7) = 13\nfib(8) = 21\nfib(9) = 34\nfib(10) = 55\nfib(11) = 89\nfib(12) = 144\nfib(13) = 233\nfib(14) = 377\nfib(15) = 610\nfib(16) = 987\nfib(17) = 1597\nfib(18) = 2584\nfib(19) = 4181",
+        "status": "success"
+      }
+    },
+    {
+      "index": 3,
+      "type": "llm_call",
+      "timestamp": "2026-03-13T10:00:04Z",
+      "duration_ms": 1800,
+      "llm_call": {
+        "model": "claude-opus-4-6",
+        "messages": [
+          {
+            "role": "tool",
+            "content": "fib(0) = 0\nfib(1) = 1\n..."
+          }
+        ],
+        "response": {
+          "role": "assistant",
+          "content": "The Fibonacci function is working correctly. It uses `@lru_cache` for memoization, making it efficient for large numbers by avoiding redundant calculations. Each value is computed only once and cached."
+        },
+        "stop_reason": "end_turn"
+      },
+      "tokens": {
+        "input_tokens": 320,
+        "output_tokens": 89
+      },
+      "cost_usd": 0.0018
+    }
+  ],
+  "outcome": {
+    "status": "success",
+    "summary": "Created an efficient Fibonacci function using lru_cache memoization. Tested successfully for first 20 numbers.",
+    "files_changed": [
+      {
+        "path": "fibonacci.py",
+        "action": "created"
+      }
+    ]
+  },
+  "stats": {
+    "total_steps": 4,
+    "total_llm_calls": 2,
+    "total_tool_calls": 2,
+    "total_tokens": {
+      "input_tokens": 362,
+      "output_tokens": 245
+    },
+    "total_cost_usd": 0.0041,
+    "total_duration_ms": 5390,
+    "errors_count": 0,
+    "retries_count": 0
+  }
+}
