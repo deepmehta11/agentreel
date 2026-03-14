@@ -19,16 +19,12 @@ jobs:
           - target: x86_64-unknown-linux-gnu
             os: ubuntu-latest
             archive: agentreel-linux-x86_64.tar.gz
-          - target: aarch64-unknown-linux-gnu
-            os: ubuntu-latest
-            archive: agentreel-linux-aarch64.tar.gz
-            use_cross: true
-          - target: x86_64-apple-darwin
-            os: macos-13
-            archive: agentreel-macos-x86_64.tar.gz
           - target: aarch64-apple-darwin
             os: macos-latest
             archive: agentreel-macos-aarch64.tar.gz
+          - target: x86_64-apple-darwin
+            os: macos-latest
+            archive: agentreel-macos-x86_64.tar.gz
 
     steps:
       - uses: actions/checkout@v4
@@ -37,20 +33,11 @@ jobs:
         with:
           targets: ${{ matrix.target }}
 
-      - name: Install OpenSSL (Linux x86_64)
-        if: matrix.target == 'x86_64-unknown-linux-gnu'
+      - name: Install OpenSSL (Linux)
+        if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y libssl-dev pkg-config
 
-      - name: Install cross
-        if: matrix.use_cross
-        run: cargo install cross --git https://github.com/cross-rs/cross
-
-      - name: Build (cross)
-        if: matrix.use_cross
-        run: cross build --release --target ${{ matrix.target }} -p agentreel-cli
-
-      - name: Build (native)
-        if: "!matrix.use_cross"
+      - name: Build
         run: cargo build --release --target ${{ matrix.target }} -p agentreel-cli
 
       - name: Package
@@ -68,7 +55,6 @@ jobs:
     name: Create Release
     needs: build
     runs-on: ubuntu-latest
-    if: always() && !cancelled()
     steps:
       - uses: actions/checkout@v4
 
